@@ -14,7 +14,7 @@ import time
 # These are the ONLY three variables you need to replace
 API_KEY = '1234'  # Replace with your actual API key
 API_SECRET = "1234"  # Replace with your actual API secret
-DOMAIN = 'malkasian.org'  # Replace with your actual domain
+DOMAIN = 'example.org'  # Replace with your actual domain
 RECORD_TYPE = 'A'
 RECORD_NAME = '@'
 CHECK_INTERVAL = 300
