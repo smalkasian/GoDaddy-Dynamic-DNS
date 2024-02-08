@@ -24,12 +24,20 @@ headers = {
 }
 #--------------------------------------FUNCTIONS------------------------------------------
 def get_public_ip():
-    try:
-        response = requests.get("https://api.ipify.org")
-        return response.text if response.status_code == 200 else None
-    except Exception as e:
-        print(f"Error fetching public IP address: {e}")
-        return None
+    # List of services to get the public IP address. Add or remove services as needed.
+    services = [
+        "https://api.ipify.org",
+        "https://icanhazip.com",
+        "https://ifconfig.me/ip"
+    ]
+    for service in services:
+        try:
+            response = requests.get(service, timeout=5)  # Added a timeout for the request
+            if response.status_code == 200:
+                return response.text.strip()
+        except requests.RequestException as e:
+            print(f"Error fetching public IP address from {service}: {e}")
+    return None
 
 def get_current_dns_ip():
     url = f"https://api.godaddy.com/v1/domains/{domain}/records/{record_type}/{record_name}"
@@ -44,7 +52,6 @@ def update_dns(new_ip_address, attempts=0):
     url = f"https://api.godaddy.com/v1/domains/{domain}/records/{record_type}/{record_name}"
     data = [{"data": new_ip_address, "ttl": 600}]
     response = requests.put(url, json=data, headers=headers)
-    
     if response.status_code == 429 and attempts < 5:  # Too Many Requests
         wait_time = 2 ** attempts  # Exponential backoff
         print(f"Rate limit reached, retrying in {wait_time} seconds...")
@@ -55,7 +62,6 @@ def update_dns(new_ip_address, attempts=0):
     else:
         print(f"Failed to update DNS record. Status code: {response.status_code}, Response: {response.text}")
 
-#------------------------------------MAIN PROGRAM-----------------------------------------
 def main():
     new_ip_address = get_public_ip()
     if not new_ip_address:
@@ -73,5 +79,7 @@ def main():
     else:
         print("IP address has not changed. No update needed.")
 
+#------------------------------------MAIN PROGRAM-----------------------------------------
+        
 if __name__ == "__main__":
     main()

@@ -26,12 +26,20 @@ headers = {
 
 #--------------------------------------FUNCTIONS------------------------------------------
 def get_public_ip():
-    try:
-        response = requests.get("https://api.ipify.org")
-        return response.text if response.status_code == 200 else None
-    except Exception as e:
-        print(f"Error fetching public IP address: {e}")
-        return None
+    # List of services to get the public IP address. Add or remove services as needed.
+    services = [
+        "https://api.ipify.org",
+        "https://icanhazip.com",
+        "https://ifconfig.me/ip"
+    ]
+    for service in services:
+        try:
+            response = requests.get(service, timeout=5)  # Added a timeout for the request
+            if response.status_code == 200:
+                return response.text.strip()
+        except requests.RequestException as e:
+            print(f"Error fetching public IP address from {service}: {e}")
+    return None
 
 def get_current_dns_ip():
     url = f"https://api.godaddy.com/v1/domains/{DOMAIN}/records/{RECORD_TYPE}/{RECORD_NAME}"
