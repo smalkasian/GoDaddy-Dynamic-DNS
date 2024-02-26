@@ -6,9 +6,10 @@
 # GoDaddy® is a registered trademark of GoDaddy Operating Company, LLC. All rights reserved.
 #------------------------------------------------------------------------------------
 
-
+from requests.exceptions import RequestException
 import requests
 import time
+from datetime import datetime
 
 #--------------------------------------VARIABLES------------------------------------------
 # These are the ONLY three variables you need to replace
@@ -25,6 +26,12 @@ headers = {
 }
 
 #--------------------------------------FUNCTIONS------------------------------------------
+
+def get_current_time():
+    # Returns the current time as a string in the format: YYYY-MM-DD HH:MM:SS
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
 def get_public_ip():
     # List of services to get the public IP address. Add or remove services as needed.
     services = [
@@ -69,18 +76,30 @@ def update_dns(new_ip_address, attempts=0):
 
 def main_loop():
     while True:
-        new_ip_address = get_public_ip()
-        if not new_ip_address:
-            print("Failed to retrieve public IP address.")
+        try:
+            new_ip_address = get_public_ip()
+            if not new_ip_address:
+                current_time = get_current_time()
+                print(f"Failed to retrieve public IP address. {current_time}")
+                time.sleep(CHECK_INTERVAL)
+                continue
+            
+            current_dns_ip = get_current_dns_ip()
+            if new_ip_address != current_dns_ip:
+                current_time = get_current_time()
+                print(f"IP address has changed to {new_ip_address}. Updating DNS... {current_time}")
+                update_dns(new_ip_address)
+            else:
+                current_time = get_current_time()
+                print(f"IP address has not changed. No update needed. {current_time}")
+                
+        except requests.exceptions.ConnectionError as e:
+            print(f"ConnectionError occurred: {e}. Retrying in {CHECK_INTERVAL} seconds...")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+        finally:
             time.sleep(CHECK_INTERVAL)
-            continue
-        current_dns_ip = get_current_dns_ip()
-        if new_ip_address != current_dns_ip:
-            print(f"IP address has changed to {new_ip_address}. Updating DNS...")
-            update_dns(new_ip_address)
-        else:
-            print("IP address has not changed. No update needed.")
-        time.sleep(CHECK_INTERVAL)
+
 
 #------------------------------------MAIN PROGRAM-----------------------------------------
         
